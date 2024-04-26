@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flights and Airlines</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f5cdf1;
+        }
+
+        .banner {
+            background-color: #daa7e7;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #flights-list {
+            display: none; /* Initially hidden */
+        }
+
+        #airlines-list {
+            display: none; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">Flights and Airlines</div>
+
+    <button id="toggleFlightsButton">Show Flights</button>
+    <button id="toggleAirlinesButton">Show Airlines</button> 
+
+    <!-- Flights List -->
+    <div id="flights-list">
+        <h1>Flights List</h1>
+        <table id="flights-table">
+            <thead>
+                <tr>
+                    <th>Flight Number</th>
+                    <th>Origin</th>
+                    <th>Destination</th>
+                    <th>Departure Time</th>
+                    <th>Arrival Time</th>
+                    <th>Airline ID</th>
+                    <th>Actions</th> <!-- Edit/Delete -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Flights will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Airlines List -->
+    <div id="airlines-list">
+        <h1>Airlines List</h1>
+        <table id="airlines-table">
+            <thead>
+                <tr>
+                    <th>Airline ID</th>
+                    <th>Airline Name</th>
+                    <th>Airline Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Airlines will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <h2 id="form-title">Add Flight</h2>
+    <form id="flightForm">
+        <!-- Fields to add or edit flights -->
+        <label for="flightNumber">Flight Number:</label>
+        <input type="text" id="flightNumber" required>
+        <label for="origin">Origin:</label>
+        <input type="text" id="origin" required>
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" required>
+        <label for="departureTime">Departure Time:</label>
+        <input type="time" id="departureTime" required>
+        <label for="arrivalTime">Arrival Time:</label>
+        <input type="time" id="arrivalTime" required>
+        <label for="airlineID">Airline ID:</label>
+        <input type="text" id="airlineID" required>
+        <button type="submit" id="submitBtn">Add Flight</button>
+    </form>
+
+    <script>
+        const fetchFlights = () => {
+            fetch('/flights')
+                .then(response => response.json())
+                .then(data => {
+                    const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
+                    flightsTableBody.innerHTML = ''; // Clear existing rows
+
+                    data.forEach(flight => {
+                        const row = flightsTableBody.insertRow(); // Create a new row
+
+                        // Add flight data to the table
+                        row.insertCell().textContent = flight.flight_number;
+                        row.insertCell().textContent = flight.origin;
+                        row.insertCell().textContent = flight.destination;
+                        row.insertCell().textContent = flight.departure_time;
+                        row.insertCell().textContent = flight.arrival_time;
+                        row.insertCell().textContent = flight.airline_id;
+
+                        // Edit and Delete buttons
+                        const actionsCell = row.insertCell();
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.onclick = () => {
+                            editFlight(flight);
+                        };
+                        actionsCell.appendChild(editButton);
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => {
+                            deleteFlight(flight._id);
+                        };
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Error fetching flights data:', error));
+        };
+
+        const fetchAirlines = () => {
+            fetch('/airlines')
+            .then(response => response.json())
+            .then(data => {
+                const airlinesTableBody = document.getElementById('airlines-table').querySelector('tbody');
+                airlinesTableBody.innerHTML = ''; // Clear existing rows
+                data.forEach(airline => {
+                    const row = airlinesTableBody.insertRow(); // Create a new row
+                    row.insertCell().textContent = airline.airline_id;
+                    row.insertCell().textContent = airline.airline_name;
+                    row.insertCell().textContent = airline.airline_code;
+                });
+            })
+        .catch(error => console.error('Error fetching airlines data:', error));
+        };
+
+        const addFlight = async (flightData) => {
+            try {
+                const response = await fetch('/flights', {
+                    method: 'POST', // Use POST to add a new flight
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(flightData), // Send as JSON
+                });
+
+                if (response.ok) {
+                    alert('Flight added successfully!');
+                    fetchFlights(); // Refresh the flights table after adding
+                    document.getElementById('flightForm').reset(); // Reset the form
+                    resetForm(); // Reset to "Add Flight"
+                } else {
+                    const errorText = await response.text();
+                    alert(`Error: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error adding flight:', error);
+                alert('Error adding flight');
+            }
+        };
+
+        const updateFlight = async (flightId, flightData) => {
+            try {
+                const response = await fetch(`/flights/${flightId}`, {
+                    method: 'PATCH', // Use PATCH to update a flight
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(flightData),
+                });
+
+                if (response.ok) {
+                    alert('Flight updated successfully!');
+                    fetchFlights(); // Refresh the flights table after updating
+                    resetForm(); // Reset to "Add Flight"
+                } else {
+                    const errorText = await response.text();
+                    alert(`Error: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error updating flight:', error);
+                alert('Error updating flight');
+            }
+        };
+
+        const resetForm = () => {
+            const form = document.getElementById('flightForm');
+            form.reset();
+            form.querySelector('button').textContent = 'Add Flight'; // Change back to "Add Flight"
+            document.getElementById('form-title').textContent = 'Add Flight';
+            delete form.dataset.flightId; // Remove stored flight ID
+        };
+
+        const editFlight = (flight) => {
+            // Populate the form fields with the flight data for editing
+            document.getElementById('flightNumber').value = flight.flight_number;
+            document.getElementById('origin').value = flight.origin;
+            document.getElementById('destination').value = flight.destination;
+            document.getElementById('departureTime').value = flight.departure_time;
+            document.getElementById('arrivalTime').value = flight.arrival_time;
+            document.getElementById('airlineID').value = flight.airline_id;
+
+            // Store the flight ID in the form's dataset
+            const form = document.getElementById('flightForm');
+            form.dataset.flightId = flight._id;
+
+            // Change the submit button text to indicate update mode
+            form.querySelector('button').textContent = 'Update Flight';
+            document.getElementById('form-title').textContent = 'Edit Flight';
+        };
+
+        const deleteFlight = async (flightId) => {
+            try {
+                const response = await fetch(`/flights/${flightId}`, {
+                    method: 'DELETE', // Use DELETE to delete a flight
+                });
+
+                if (response.ok) {
+                    alert('Flight deleted successfully!');
+                    fetchFlights(); // Refresh the flights table after deleting
+                } else {
+                    const errorText = await response.text();
+                    alert(`Error: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error deleting flight:', error);
+                alert('Error deleting flight');
+            }
+        };
+
+        document.getElementById('flightForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent default form submission behavior
+
+            const form = document.getElementById('flightForm');
+            const flightData = {
+                flight_number: document.getElementById('flightNumber').value,
+                origin: document.getElementById('origin').value,
+                destination: document.getElementById('destination').value,
+                departure_time: document.getElementById('departureTime').value,
+                arrival_time: document.getElementById('arrivalTime').value,
+                airline_id: document.getElementById('airlineID').value,
+            };
+
+            // Check if the form is in edit mode (based on flight ID)
+            if ('flightId' in form.dataset) {
+                updateFlight(form.dataset.flightId, flightData); // Update the flight
+            } else {
+                addFlight(flightData); // Add a new flight
+            }
+        });
+
+        const toggleFlightsButton = document.getElementById('toggleFlightsButton');
+        const flightsList = document.getElementById('flights-list');
+
+        toggleFlightsButton.addEventListener('click', () => {
+            if (flightsList.style.display === 'none' || flightsList.style.display === '') {
+                flightsList.style.display = 'block';
+                toggleFlightsButton.textContent = 'Hide Flights';
+                fetchFlights(); // Refresh the flight list when showing
+            } else {
+                flightsList.style.display = 'none';
+                toggleFlightsButton.textContent = 'Show Flights';
+            }
+        });
+
+        const toggleAirlinesButton = document.getElementById('toggleAirlinesButton');
+        const airlinesList = document.getElementById('airlines-list');
+
+        toggleAirlinesButton.addEventListener('click', () => {
+            if (airlinesList.style.display === 'none' || airlinesList.style.display === '') {
+                airlinesList.style.display = 'block';
+                toggleAirlinesButton.textContent = 'Hide Airlines';
+                fetchAirlines(); // Refresh the airline list when showing
+            } else {
+                airlinesList.style.display = 'none';
+                toggleAirlinesButton.textContent = 'Show Airlines';
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -40,7 +40,8 @@
 
     <button id="toggleFlightsButton">Show Flights</button>
     <button id="toggleAirlinesButton">Show Airlines</button> 
-    <button id="generateCsvButton">Generate CSV</button> 
+    <button id="generateFlightButton">Generate Flight CSV</button> 
+    <button id="generateAirlineButton">Generate Airline CSV</button> 
 
     <!-- Flights List -->
     <div id="flights-list">
@@ -97,7 +98,7 @@
     </form>
 
     <script>
-         const generateCsv = () => {
+         const generateFlightCsv = () => {
             const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
             const rows = flightsTableBody.querySelectorAll('tr');
 
@@ -113,12 +114,39 @@
             const downloadLink = document.createElement('a'); // Create a download link
             downloadLink.href = URL.createObjectURL(blob);
             downloadLink.download = 'flights.csv'; // Set the download file name
-            document.body.appendChild(downloadLink); // Append to the body to make it clickable
+            document.body.appendChild(downloadLink); // Append to xthe body to make it clickable
             downloadLink.click(); // Trigger the download
             document.body.removeChild(downloadLink); // Clean up
         };
 
-        document.getElementById('generateCsvButton').addEventListener('click', generateCsv); // Add event listener to button
+        const generateAirlineCsv = () => {
+        const airlinesTableBody = document.getElementById('airlines-table').querySelector('tbody');
+        const rows = airlinesTableBody.querySelectorAll('tr');
+
+        let csvContent = 'Airline ID,Airline Name,Airline Code\n'; // CSV header
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const rowData = Array.from(cells).map(cell => cell.textContent).join(','); // Fetch all columns
+            csvContent += rowData + '\n'; // Add row data to CSV
+        });
+
+        try {
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'airlines.csv'; // Correct filename
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        } catch (e) {
+            console.error('Error generating CSV:', e);
+        }
+        };
+
+        document.getElementById('generateFlightButton').addEventListener('click', generateFlightCsv); // Add event listener to button
+        document.getElementById('generateAirlineButton').addEventListener('click', generateAirlineCsv); // Add event listener to button
+        
         const fetchFlights = () => {
             fetch('/flights')
                 .then(response => response.json())

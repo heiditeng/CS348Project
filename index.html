@@ -40,6 +40,7 @@
 
     <button id="toggleFlightsButton">Show Flights</button>
     <button id="toggleAirlinesButton">Show Airlines</button> 
+    <button id="generateCsvButton">Generate CSV</button> 
 
     <!-- Flights List -->
     <div id="flights-list">
@@ -53,11 +54,10 @@
                     <th>Departure Time</th>
                     <th>Arrival Time</th>
                     <th>Airline ID</th>
-                    <th>Actions</th> <!-- Edit/Delete -->
+                    <th>Actions</th> 
                 </tr>
             </thead>
             <tbody>
-                <!-- Flights will be dynamically added here -->
             </tbody>
         </table>
     </div>
@@ -74,7 +74,6 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Airlines will be dynamically added here -->
             </tbody>
         </table>
     </div>
@@ -98,17 +97,39 @@
     </form>
 
     <script>
+         const generateCsv = () => {
+            const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
+            const rows = flightsTableBody.querySelectorAll('tr');
+
+            let csvContent = 'Flight Number,Origin,Destination,Departure Time,Arrival Time,Airline ID\n'; // CSV header
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = Array.from(cells).slice(0, 6).map(cell => cell.textContent).join(',');
+                csvContent += rowData + '\n'; // Add row data to CSV
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' }); // create a Blob for CSV data
+            const downloadLink = document.createElement('a'); // Create a download link
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'flights.csv'; // Set the download file name
+            document.body.appendChild(downloadLink); // Append to the body to make it clickable
+            downloadLink.click(); // Trigger the download
+            document.body.removeChild(downloadLink); // Clean up
+        };
+
+        document.getElementById('generateCsvButton').addEventListener('click', generateCsv); // Add event listener to button
         const fetchFlights = () => {
             fetch('/flights')
                 .then(response => response.json())
                 .then(data => {
                     const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
-                    flightsTableBody.innerHTML = ''; // Clear existing rows
+                    flightsTableBody.innerHTML = ''; // clear existing rows
 
                     data.forEach(flight => {
-                        const row = flightsTableBody.insertRow(); // Create a new row
+                        const row = flightsTableBody.insertRow(); // create a new row
 
-                        // Add flight data to the table
+                        // add flight data to the table
                         row.insertCell().textContent = flight.flight_number;
                         row.insertCell().textContent = flight.origin;
                         row.insertCell().textContent = flight.destination;
@@ -116,7 +137,7 @@
                         row.insertCell().textContent = flight.arrival_time;
                         row.insertCell().textContent = flight.airline_id;
 
-                        // Edit and Delete buttons
+                        // edit and delete buttons
                         const actionsCell = row.insertCell();
                         const editButton = document.createElement('button');
                         editButton.textContent = 'Edit';
@@ -135,7 +156,7 @@
                 })
                 .catch(error => console.error('Error fetching flights data:', error));
         };
-
+        
         const fetchAirlines = () => {
             fetch('/airlines')
             .then(response => response.json())

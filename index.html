@@ -97,6 +97,18 @@
         <button type="submit" id="submitBtn">Add Flight</button>
     </form>
 
+    <h2 id="form-title">Add Airline</h2>
+    <form id="airlineForm">
+        <!-- Fields to add or edit airlines -->
+        <label for="airline_id">Airline ID:</label>
+        <input type="text" id="airline_id" required>
+        <label for="airline_name">Airline Name:</label>
+        <input type="text" id="airline_name" required>
+        <label for="airline_code">Airline Code:</label>
+        <input type="text" id="airline_code" required>
+        <button type="submit" id="submitBtn">Add Airline</button>
+    </form>
+
     <script>
          const generateFlightCsv = () => {
             const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
@@ -226,6 +238,31 @@
             }
         };
 
+        // Function to add a new airline
+        const addAirline = async (airlineData) => {
+            try {
+                const response = await fetch('/airlines', {
+                    method: 'POST', // Use POST to add a new airline
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(airlineData), // Send airline data as JSON
+                });
+
+                if (response.ok) {
+                    alert('Airline added successfully!');
+                    fetchAirlines(); // Refresh the airlines table after adding
+                    document.getElementById('airlineForm').reset(); // Reset the form
+                } else {
+                    const errorText = await response.text();
+                    alert(`Error: ${errorText}`); // Handle error responses
+                }
+            } catch (error) {
+                console.error('Error adding airline:', error);
+                alert('Error adding airline'); // Handle exceptions
+            }
+        };
+
         const updateFlight = async (flightId, flightData) => {
             try {
                 const response = await fetch(`/flights/${flightId}`, {
@@ -257,6 +294,7 @@
             document.getElementById('form-title').textContent = 'Add Flight';
             delete form.dataset.flightId; // Remove stored flight ID
         };
+
 
         const editFlight = (flight) => {
             // Populate the form fields with the flight data for editing
@@ -294,6 +332,19 @@
                 alert('Error deleting flight');
             }
         };
+
+        // Event listener for the airline form
+        document.getElementById('airlineForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent default form behavior
+
+            const airlineData = {
+                airline_id: document.getElementById('airline_id').value,
+                airline_name: document.getElementById('airline_name').value,
+                airline_code: document.getElementById('airline_code').value,
+            };
+
+            addAirline(airlineData); // Call the function to add an airline
+        });
 
         document.getElementById('flightForm').addEventListener('submit', (event) => {
             event.preventDefault(); // Prevent default form submission behavior

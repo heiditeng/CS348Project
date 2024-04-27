@@ -73,6 +73,30 @@ app.post('/flights', async (req, res) => {
     }
 });
 
+// API endpoint to add a new airline
+app.post('/airlines', async (req, res) => {
+    const newAirline = req.body;
+
+    // Define the required fields for an airline
+    const requiredFields = ['airline_name', 'airline_code'];
+    const missingFields = requiredFields.filter(field => !newAirline[field]);
+
+    // Check if any required fields are missing
+    if (missingFields.length > 0) {
+        return res.status(400).send(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    try {
+        // Insert the new airline into the airlines collection
+        const result = await airlineCollection.insertOne(newAirline);
+        res.status(201).json(newAirline); // Respond with the newly created airline
+    } catch (error) {
+        console.error('Error adding new airline:', error);
+        res.status(500).send('Error adding airline'); // Handle server errors
+    }
+});
+
+
 // API endpoint to delete a flight
 app.delete('/flights/:id', async (req, res) => {
     const flightId = req.params.id;

@@ -38,6 +38,10 @@
 <body>
     <div class="banner">Flights and Airlines</div>
 
+     <!-- Search Functionality -->
+    <input type="text" id="searchInput" placeholder="Search by Flight Number">
+    <button id="searchButton">Search Flights</button>
+
     <button id="toggleFlightsButton">Show Flights</button>
     <button id="toggleAirlinesButton">Show Airlines</button> 
     <button id="generateFlightButton">Generate Flight CSV</button> 
@@ -196,6 +200,47 @@
                 })
                 .catch(error => console.error('Error fetching flights data:', error));
         };
+
+        const searchFlights = () => {
+            const searchValue = document.getElementById('searchInput').value.trim();
+            const flightsTableBody = document.getElementById('flights-table').querySelector('tbody');
+
+            flightsTableBody.innerHTML = ''; 
+
+            fetch('/flights')
+                .then(response => response.json())
+                .then(data => {
+                    const filteredFlights = data.filter(flight => flight.flight_number === searchValue);
+
+                    filteredFlights.forEach(flight => {
+                        const row = flightsTableBody.insertRow(); 
+                        row.insertCell().textContent = flight.flight_number;
+                        row.insertCell().textContent = flight.origin;
+                        row.insertCell().textContent = flight.destination;
+                        row.insertCell().textContent = flight.departure_time;
+                        row.insertCell().textContent = flight.arrival_time;
+                        row.insertCell().textContent = flight.airline_id;
+
+                        const actionsCell = row.insertCell();
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.onclick = () => {
+                            editFlight(flight);
+                        };
+                        actionsCell.appendChild(editButton);
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.onclick = () => {
+                            deleteFlight(flight._id);
+                        };
+                        actionsCell.appendChild(deleteButton);
+                    });
+                })
+                .catch(error => console.error('Error fetching flights data:', error));
+        };
+
+        document.getElementById('searchButton').addEventListener('click', searchFlights);
         
         const fetchAirlines = () => {
             fetch('/airlines')
